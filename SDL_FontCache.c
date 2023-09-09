@@ -695,8 +695,13 @@ FC_Rect FC_DefaultRenderCallback(FC_Image* src, FC_Rect* srcrect, FC_Target* des
             flip = (SDL_RendererFlip) ((int)flip | (int)SDL_FLIP_VERTICAL);
         }
 
-        SDL_Rect r = *srcrect;
-        SDL_Rect dr = {(int)x, (int)y, (int)(xscale*r.w), (int)(yscale*r.h)};
+        SDL_FRect r = { 
+            (float)srcrect->x, 
+            (float)srcrect->y, 
+            (float)srcrect->w,
+            (float)srcrect->h
+        };
+        SDL_FRect dr = {(float)x, (float)y, (float)(xscale*r.w), (float)(yscale*r.h)};
         SDL_RenderTextureRotated(dest, src, &r, &dr, 0, NULL, flip);
     }
     #endif
