@@ -683,16 +683,16 @@ FC_Rect FC_DefaultRenderCallback(FC_Image* src, FC_Rect* srcrect, FC_Target* des
     }
     #else
     {
-        SDL_RendererFlip flip = SDL_FLIP_NONE;
+        SDL_FlipMode flip = SDL_FLIP_NONE;
         if(xscale < 0)
         {
             xscale = -xscale;
-            flip = (SDL_RendererFlip) ((int)flip | (int)SDL_FLIP_HORIZONTAL);
+            flip = (SDL_FlipMode) ((int)flip | (int)SDL_FLIP_HORIZONTAL);
         }
         if(yscale < 0)
         {
             yscale = -yscale;
-            flip = (SDL_RendererFlip) ((int)flip | (int)SDL_FLIP_VERTICAL);
+            flip = (SDL_FlipMode) ((int)flip | (int)SDL_FLIP_VERTICAL);
         }
 
         SDL_FRect r = { 
@@ -993,23 +993,8 @@ Uint8 FC_UploadGlyphCache(FC_Font* font, int cache_level, SDL_Surface* data_surf
         // Must upload with render target enabled so we can put more glyphs on later
         SDL_Renderer* renderer = font->renderer;
 
-        // Set filter mode for new texture
-        char old_filter_mode[16];  // Save it so we can change the hint value in the meantime
-        const char* old_filter_hint = SDL_GetHint(SDL_HINT_RENDER_SCALE_QUALITY);
-        if(!old_filter_hint)
-            old_filter_hint = "nearest";
-        snprintf(old_filter_mode, 16, "%s", old_filter_hint);
-
-        if(FC_GetFilterMode(font) == FC_FILTER_LINEAR)
-            SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
-        else
-            SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
-
         new_level = SDL_CreateTexture(renderer, data_surface->format->format, SDL_TEXTUREACCESS_TARGET, data_surface->w, data_surface->h);
         SDL_SetTextureBlendMode(new_level, SDL_BLENDMODE_BLEND);
-
-        // Reset filter mode for the temp texture
-        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
 
         {
             Uint8 r, g, b, a;
@@ -1052,10 +1037,6 @@ Uint8 FC_UploadGlyphCache(FC_Font* font, int cache_level, SDL_Surface* data_surf
 
             SDL_DestroyTexture(temp);
         }
-
-        // Reset to the old filter value
-        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, old_filter_mode);
-
     }
     #endif
     if(new_level == NULL || !FC_SetGlyphCacheLevel(font, cache_level, new_level))
@@ -1305,14 +1286,14 @@ Uint8 FC_LoadFont(FC_Font* font, const char* filename_ttf, Uint32 pointSize, SDL
 Uint8 FC_LoadFont(FC_Font* font, FC_Target* renderer, const char* filename_ttf, Uint32 pointSize, SDL_Color color, int style)
 #endif
 {
-    SDL_RWops* rwops;
+    SDL_IOStream* iostream;
 
     if(font == NULL)
         return 0;
 
-    rwops = SDL_RWFromFile(filename_ttf, "rb");
+    iostream = SDL_IOFromFile(filename_ttf, "rb");
 
-    if(rwops == NULL)
+    if(iostream == NULL)
     {
         FC_Log("Unable to open file for reading: %s \n", SDL_GetError());
         return 0;
@@ -1321,14 +1302,14 @@ Uint8 FC_LoadFont(FC_Font* font, FC_Target* renderer, const char* filename_ttf, 
     #ifdef FC_USE_SDL_GPU
     return FC_LoadFont_RW(font, rwops, 1, pointSize, color, style);
     #else
-    return FC_LoadFont_RW(font, renderer, rwops, 1, pointSize, color, style);
+    return FC_LoadFont_RW(font, renderer, iostream, 1, pointSize, color, style);
     #endif
 }
 
 #ifdef FC_USE_SDL_GPU
 Uint8 FC_LoadFont_RW(FC_Font* font, SDL_RWops* file_rwops_ttf, Uint8 own_rwops, Uint32 pointSize, SDL_Color color, int style)
 #else
-Uint8 FC_LoadFont_RW(FC_Font* font, FC_Target* renderer, SDL_RWops* file_rwops_ttf, Uint8 own_rwops, Uint32 pointSize, SDL_Color color, int style)
+Uint8 FC_LoadFont_RW(FC_Font* font, FC_Target* renderer, SDL_IOStream* file_iostream_ttf, Uint8 own_rwops, Uint32 pointSize, SDL_Color color, int style)
 #endif
 {
     Uint8 result;
@@ -1342,17 +1323,17 @@ Uint8 FC_LoadFont_RW(FC_Font* font, FC_Target* renderer, SDL_RWops* file_rwops_t
     {
         FC_Log("Unable to initialize SDL_ttf: %s \n", TTF_GetError());
         if(own_rwops)
-            SDL_RWclose(file_rwops_ttf);
+            SDL_CloseIO(file_iostream_ttf);
         return 0;
     }
 
-    ttf = TTF_OpenFontRW(file_rwops_ttf, own_rwops, pointSize);
+    ttf = TTF_OpenFontIO(file_iostream_ttf, own_rwops, pointSize);
 
     if(ttf == NULL)
     {
         FC_Log("Unable to load TrueType font: %s \n", TTF_GetError());
         if(own_rwops)
-            SDL_RWclose(file_rwops_ttf);
+            SDL_CloseIO(file_iostream_ttf);
         return 0;
     }
 
