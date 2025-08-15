@@ -1975,6 +1975,7 @@ static void FC_RenderAlign(FC_Font* font, FC_Target* dest, float x, float y, int
 
 static FC_StringList* FC_GetBufferFitToColumn(FC_Font* font, int width, FC_Scale scale, Uint8 keep_newlines)
 {
+    (void)scale;
     FC_StringList* result = NULL;
     FC_StringList** current = &result;
 
@@ -2545,13 +2546,11 @@ FC_Rect FC_GetCharacterOffset(FC_Font* font, Uint16 position_index, int column_w
     for(iter = ls; iter != NULL;)
     {
         char* line;
-        int i = 0;
         FC_StringList* next_iter = iter->next;
 
         ++num_lines;
         for(line = iter->value; line != NULL && *line != '\0'; line = (char*)U8_next(line))
         {
-            ++i;
             --position_index;
             if(position_index == 0)
             {
@@ -2776,6 +2775,7 @@ Uint8 FC_InRect(float x, float y, FC_Rect input_rect)
 // TODO: Make it work with alignment
 Uint16 FC_GetPositionFromOffset(FC_Font* font, float x, float y, int column_width, FC_AlignEnum align, const char* formatted_text, ...)
 {
+    (void)align;
     FC_StringList *ls, *iter;
     Uint8 done = 0;
     int height = FC_GetLineHeight(font);
