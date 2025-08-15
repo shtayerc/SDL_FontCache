@@ -1172,7 +1172,7 @@ Uint8 FC_LoadFontFromTTF(FC_Font* font, SDL_Renderer* renderer, TTF_Font* ttf, S
     #ifdef FC_USE_SDL_GPU
     fc_has_render_target_support = GPU_IsFeatureEnabled(GPU_FEATURE_RENDER_TARGETS);
     #else
-    fc_has_render_target_support = 0; // (info.flags & SDL_RENDERER_TARGETTEXTURE);
+    fc_has_render_target_support = 1; //all renderers support target texture functionality
 
     font->renderer = renderer;
     #endif
