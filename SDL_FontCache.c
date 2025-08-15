@@ -1315,7 +1315,7 @@ Uint8 FC_LoadFont_RW(FC_Font* font, FC_Target* renderer, SDL_IOStream* file_iost
     if(font == NULL)
         return 0;
 
-    if(!TTF_WasInit() && TTF_Init())
+    if(!TTF_WasInit() && !TTF_Init())
     {
         FC_Log("Unable to initialize SDL_ttf: %s \n", SDL_GetError());
         if(own_rwops)
